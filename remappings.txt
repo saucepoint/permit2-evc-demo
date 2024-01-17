@@ -1,0 +1,15 @@
+@openzeppelin/contracts/=lib/evc-playground/lib/openzeppelin-contracts/contracts/
+ds-test/=lib/forge-std/lib/ds-test/src/
+erc4626-tests/=lib/evc-playground/lib/erc4626-tests/
+ethereum-vault-connector/=lib/evc-playground/lib/ethereum-vault-connector/
+evc-playground/=lib/evc-playground/src/
+evc/=lib/evc-playground/lib/ethereum-vault-connector/src/
+forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/
+forge-std/=lib/forge-std/src/
+openzeppelin-contracts/=lib/permit2/lib/openzeppelin-contracts/
+openzeppelin/=lib/evc-playground/lib/openzeppelin-contracts/contracts/
+permit2/=lib/permit2/
+solmate/src/=lib/evc-playground/lib/solmate/src/
+solmate/utils/=lib/evc-playground/lib/solmate/src/utils/
+lib/evc-playground:solmate/=lib/evc-playground/lib/solmate/src/
+solmate/=lib/evc-playground/lib/solmate/
