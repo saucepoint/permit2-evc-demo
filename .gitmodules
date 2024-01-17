@@ -4,3 +4,6 @@
 [submodule "lib/evc-playground"]
 	path = lib/evc-playground
 	url = https://github.com/euler-xyz/evc-playground
+[submodule "lib/permit2"]
+	path = lib/permit2
+	url = https://github.com/uniswap/permit2
