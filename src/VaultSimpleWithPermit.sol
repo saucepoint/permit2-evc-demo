@@ -18,6 +18,7 @@ contract VaultSimpleWithPermit is VaultSimple {
         permit2 = _permit2;
     }
 
+    /// @dev Replaces asset.transferFrom with signatured-based Permit2
     function _permitTransferFrom(
         address msgSender,
         uint256 amount,
@@ -30,7 +31,7 @@ contract VaultSimpleWithPermit is VaultSimple {
         permit2.permitTransferFrom(permitData, transferDetails, msgSender, signature);
     }
 
-    /// @dev Deposits a certain amount of assets for a receiver.
+    /// @dev Deposits a certain amount of assets for a receiver, using Permit2.
     /// @param assets The assets to deposit.
     /// @param receiver The receiver of the deposit.
     /// @return shares The shares equivalent to the deposited assets.
@@ -47,6 +48,7 @@ contract VaultSimpleWithPermit is VaultSimple {
         // Check for rounding error since we round down in previewDeposit.
         require((shares = previewDeposit(assets)) != 0, "ZERO_SHARES");
 
+        // Need to transfer before minting or ERC777s could reenter.
         // transferFrom with Permit2 instead of ERC20.safeTransferFrom
         _permitTransferFrom(msgSender, assets, permitData, signature);
 
@@ -57,27 +59,30 @@ contract VaultSimpleWithPermit is VaultSimple {
         requireAccountAndVaultStatusCheck(address(0));
     }
 
-    /// @dev Mints a certain amount of shares for a receiver.
+    /// @dev Mints a certain amount of shares for a receiver, using Permit2.
     /// @param shares The shares to mint.
     /// @param receiver The receiver of the mint.
     /// @return assets The assets equivalent to the minted shares.
-    // function mintWithPermit(
-    //     uint256 shares,
-    //     address receiver
-    // ) public virtual override callThroughEVC nonReentrant returns (uint256 assets) {
-    //     address msgSender = _msgSender();
+    function mintWithPermit(
+        uint256 shares,
+        address receiver,
+        ISignatureTransfer.PermitTransferFrom calldata permitData,
+        bytes calldata signature
+    ) public virtual callThroughEVC nonReentrant returns (uint256 assets) {
+        address msgSender = _msgSender();
 
-    //     takeVaultSnapshot();
+        takeVaultSnapshot();
 
-    //     assets = previewMint(shares); // No need to check for rounding error, previewMint rounds up.
+        assets = previewMint(shares); // No need to check for rounding error, previewMint rounds up.
 
-    //     // Need to transfer before minting or ERC777s could reenter.
-    //     asset.safeTransferFrom(msgSender, address(this), assets);
+        // Need to transfer before minting or ERC777s could reenter.
+        // transferFrom with Permit2 instead of ERC20.safeTransferFrom
+        _permitTransferFrom(msgSender, assets, permitData, signature);
 
-    //     _mint(receiver, shares);
+        _mint(receiver, shares);
 
-    //     emit Deposit(msgSender, receiver, assets, shares);
+        emit Deposit(msgSender, receiver, assets, shares);
 
-    //     requireAccountAndVaultStatusCheck(address(0));
-    // }
+        requireAccountAndVaultStatusCheck(address(0));
+    }
 }

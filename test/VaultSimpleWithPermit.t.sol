@@ -43,6 +43,9 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
         uint256 aliceUnderlyingAmount = amount;
         underlying.mint(alice, aliceUnderlyingAmount);
 
+        // -------------------------
+        // --- Permit2 Signature ---
+        // -------------------------
         // Alice signs permit to spend 1e18 tokens
         uint256 nonce = 0;
         ISignatureTransfer.PermitTransferFrom memory permitData = defaultERC20PermitTransfer(address(underlying), nonce);
@@ -72,29 +75,24 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
         assertEq(underlying.balanceOf(alice), alicePreDepositBal);
     }
 
-    function testSingleMintRedeem(uint128 amount, uint256 seed) public {
-        if (amount == 0) amount = 1;
+    function testSingleMintWithPermitRedeem() public {
+        uint256 amount = 1e18;
 
         uint256 aliceShareAmount = amount;
-
-        address alice = address(0xABCD);
-
         underlying.mint(alice, aliceShareAmount);
 
-        vm.prank(alice);
-        underlying.approve(address(vault), aliceShareAmount);
-        assertEq(underlying.allowance(alice, address(vault)), aliceShareAmount);
+        // -------------------------
+        // --- Permit2 Signature ---
+        // -------------------------
+        // Alice signs permit to spend 1e18 tokens
+        uint256 nonce = 0;
+        ISignatureTransfer.PermitTransferFrom memory permitData = defaultERC20PermitTransfer(address(underlying), nonce);
+        bytes memory sig = getPermitTransferSignature2(permitData, alicePK, permit2.DOMAIN_SEPARATOR());
 
         uint256 alicePreDepositBal = underlying.balanceOf(alice);
 
         vm.prank(alice);
-        uint256 aliceUnderlyingAmount;
-        if (seed % 2 == 0) {
-            aliceUnderlyingAmount = vault.mint(aliceShareAmount, alice);
-        } else {
-            evc.call(address(vault), alice, 0, abi.encodeWithSelector(vault.mint.selector, aliceShareAmount, alice));
-            aliceUnderlyingAmount = vault.convertToAssets(aliceShareAmount);
-        }
+        uint256 aliceUnderlyingAmount = vault.mintWithPermit(aliceShareAmount, alice, permitData, sig);
 
         // Expect exchange rate to be 1:1 on initial mint.
         assertEq(aliceShareAmount, aliceUnderlyingAmount);
@@ -107,13 +105,7 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
         assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
 
         vm.prank(alice);
-        if (seed % 2 == 0) {
-            vault.redeem(aliceShareAmount, alice, alice);
-        } else {
-            evc.call(
-                address(vault), alice, 0, abi.encodeWithSelector(vault.redeem.selector, aliceShareAmount, alice, alice)
-            );
-        }
+        vault.redeem(aliceShareAmount, alice, alice);
 
         assertEq(vault.totalAssets(), 0);
         assertEq(vault.balanceOf(alice), 0);
