@@ -20,9 +20,6 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
     address alice;
     uint256 alicePK;
 
-    error NotAuthorized();
-    error ControllerDisabled();
-
     function setUp() public {
         deployPermit2();
         permit2 = IPermit2(PERMIT2_ADDRESS);
@@ -49,7 +46,7 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
         // Alice signs permit to spend 1e18 tokens
         uint256 nonce = 0;
         ISignatureTransfer.PermitTransferFrom memory permitData = defaultERC20PermitTransfer(address(underlying), nonce);
-        bytes memory sig = getPermitTransferSignature2(permitData, alicePK, permit2.DOMAIN_SEPARATOR());
+        bytes memory sig = getPermitTransferToSignature(permitData, alicePK, address(vault), permit2.DOMAIN_SEPARATOR());
 
         uint256 alicePreDepositBal = underlying.balanceOf(alice);
 
@@ -87,7 +84,7 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
         // Alice signs permit to spend 1e18 tokens
         uint256 nonce = 0;
         ISignatureTransfer.PermitTransferFrom memory permitData = defaultERC20PermitTransfer(address(underlying), nonce);
-        bytes memory sig = getPermitTransferSignature2(permitData, alicePK, permit2.DOMAIN_SEPARATOR());
+        bytes memory sig = getPermitTransferToSignature(permitData, alicePK, address(vault), permit2.DOMAIN_SEPARATOR());
 
         uint256 alicePreDepositBal = underlying.balanceOf(alice);
 
@@ -113,20 +110,19 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
         assertEq(underlying.balanceOf(alice), alicePreDepositBal);
     }
 
-    function getPermitTransferSignature2(
+    function getPermitTransferToSignature(
         ISignatureTransfer.PermitTransferFrom memory permit,
         uint256 privateKey,
+        address to,
         bytes32 domainSeparator
-    ) internal view returns (bytes memory sig) {
+    ) internal pure returns (bytes memory sig) {
         bytes32 tokenPermissions = keccak256(abi.encode(_TOKEN_PERMISSIONS_TYPEHASH, permit.permitted));
         bytes32 msgHash = keccak256(
             abi.encodePacked(
                 "\x19\x01",
                 domainSeparator,
                 keccak256(
-                    abi.encode(
-                        _PERMIT_TRANSFER_FROM_TYPEHASH, tokenPermissions, address(vault), permit.nonce, permit.deadline
-                    )
+                    abi.encode(_PERMIT_TRANSFER_FROM_TYPEHASH, tokenPermissions, to, permit.nonce, permit.deadline)
                 )
             )
         );

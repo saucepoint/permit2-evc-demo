@@ -7,9 +7,6 @@ import "permit2/src/interfaces/IPermit2.sol";
 /// @title VaultSimpleWithPermit
 /// @notice This contract extends VaultSimple to support Permit2 deposits
 contract VaultSimpleWithPermit is VaultSimple {
-    using SafeTransferLib for ERC20;
-    using FixedPointMathLib for uint256;
-
     IPermit2 public immutable permit2;
 
     constructor(IEVC _evc, ERC20 _asset, string memory _name, string memory _symbol, IPermit2 _permit2)
