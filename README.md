@@ -66,7 +66,7 @@ function depositWithPermit(
     ...
 
     // transferFrom with Permit2 instead of ERC20.safeTransferFrom
-    _permitTransferFrom(msg.sender, depositAMount, permitData, signature);
+    _permitTransferFrom(msg.sender, depositAmount, permitData, signature);
 
     ...
 }
@@ -105,12 +105,14 @@ contract VaultSimpleWithPermitTest is Test, DeployPermit2, PermitSignature {
     }
 
     function testExample() public {
+        // alice creates a message and signs it, the default amount is 1e18
         uint256 nonce = 0;
         ISignatureTransfer.PermitTransferFrom memory permitData = defaultERC20PermitTransfer(address(underlying), nonce);
         bytes memory sig = getPermitTransferToSignature(permitData, alicePK, address(contract), permit2.DOMAIN_SEPARATOR());
 
         uint256 amount = 1e18;
 
+        // alice uses the signature
         vm.prank(alice);
         uint256 aliceShareAmount = contract.depositWithPermit(amount, alice, permitData, sig);
 
